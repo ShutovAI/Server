@@ -30,25 +30,6 @@ public class UserEntity implements Runnable, Observer {
                 String[] logPass = clientMessage.split(":");
                 user = new User(logPass[0], logPass[1]);
                 System.out.println("New user connected: " + logPass[0]);
-
-                Connection conn = null;
-                try {
-                    conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
-                            "root", "123456");
-                    ResultSet resultSet = conn.prepareStatement("SELECT login, password from USER").executeQuery();
-                    while (resultSet.next()) {
-                        if(logPass[0].equals(resultSet.getString("login"))){
-                            System.out.println("Такой пользователь уже зарегистрирован!");
-
-                        }else {
-                            resultSet = conn.prepareStatement("INSERT login, password from USER").executeQuery();
-                        }
-                        System.out.println(resultSet.getString("login"));
-                    }
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
                 server.addObserver(this);
             } else if (clientMessage.contains("exit")) {
                 System.out.println("User: " + user.getLogin() + " disconnected");
