@@ -26,7 +26,6 @@ public class MyServer implements Observable {
             e.printStackTrace();
         }
     }
-
     @Override
     public void addObserver(Observer o) {
         users.add(o);

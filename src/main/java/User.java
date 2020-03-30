@@ -6,5 +6,4 @@ import lombok.Getter;
 public class User {
     private String login;
     private String password;
-
 }

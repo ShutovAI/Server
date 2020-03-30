@@ -49,7 +49,6 @@ public class UserEntity implements Runnable, Observer {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-
                 server.addObserver(this);
             } else if (clientMessage.contains("exit")) {
                 System.out.println("User: " + user.getLogin() + " disconnected");
