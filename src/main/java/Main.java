@@ -7,7 +7,8 @@ public class Main {
     public static void main(String[] args) {
 
         MyServer server = new MyServer();
-//        Connection conn = null;
+        server.start();
+        //        Connection conn = null;
 //        try {
 //            conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
 //                    "root", "123456");
@@ -18,6 +19,5 @@ public class Main {
 //        } catch (SQLException e) {
 //            e.printStackTrace();
 //        }
-        server.start();
     }
 }

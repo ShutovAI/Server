@@ -2,12 +2,10 @@ import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
 
 public class UserEntity implements Runnable, Observer {
     private User user;
@@ -23,6 +21,7 @@ public class UserEntity implements Runnable, Observer {
     @Override
     public void run() {
 
+        PrintWriter clientWriter = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
         BufferedReader clientReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         while (true) {
             String clientMessage = clientReader.readLine();
@@ -31,18 +30,17 @@ public class UserEntity implements Runnable, Observer {
                 user = new User(logPass[0], logPass[1]);
                 System.out.println("New user connected: " + logPass[0]);
                 server.addObserver(this);
-            } else if (clientMessage.contains("exit")) {
-                System.out.println("User: " + user.getLogin() + " disconnected");
+            } else if (clientMessage.startsWith("exit")) {
+                System.out.println("Пользователь: " + user.getLogin() + " disconnected");
+                clientWriter.println(user.getLogin() + " " + "Покинул чат!");
+                clientWriter.flush();
+                break;
             } else {
                 System.out.println(user.getLogin() + ": " + clientMessage);
-                server.notifyObserver(user.getLogin() + " : " + clientMessage);
+                server.notifyObserver(user.getLogin() + ": " + clientMessage);
             }
         }
 
-//    public boolean registration(){
-//        while (){
-//
-//        }
     }
 
     @SneakyThrows
@@ -54,3 +52,7 @@ public class UserEntity implements Runnable, Observer {
     }
 }
 
+//    public boolean registration(){
+//        while (){
+//
+//        }

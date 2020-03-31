@@ -26,6 +26,7 @@ public class MyServer implements Observable {
             e.printStackTrace();
         }
     }
+
     @Override
     public void addObserver(Observer o) {
         users.add(o);
@@ -33,17 +34,24 @@ public class MyServer implements Observable {
 
     @Override
     public void stopObserver(Observer o) {
-        for (int i = 0; i < users.size(); i++) {
-            if(users.get(i).equals(o)){
-                users.remove(o);
-            }
-        }
+        users.remove(o);
+//        for (int i = 0; i < users.size(); i++) {
+//            if(users.get(i).equals(o)){
+//                users.remove(o);
+//            }
+//        }
     }
 
     @Override
     public void notifyObserver(String message) {
         for (Observer user : users) {
             user.notifyObserver(message);
+        }
+    }
+
+    public void numUsers(){
+        for (Observer user : users){
+            System.out.println(user);
         }
     }
 }
