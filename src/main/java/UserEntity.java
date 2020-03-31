@@ -1,10 +1,8 @@
 import lombok.SneakyThrows;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 
 
 public class UserEntity implements Runnable, Observer {
@@ -16,6 +14,8 @@ public class UserEntity implements Runnable, Observer {
         this.socket = socket;
         this.server = server;
     }
+
+    ArrayList<String> chat = new ArrayList();
 
     @SneakyThrows
     @Override
@@ -33,14 +33,21 @@ public class UserEntity implements Runnable, Observer {
             } else if (clientMessage.startsWith("exit")) {
                 System.out.println("Пользователь: " + user.getLogin() + " disconnected");
                 clientWriter.println(user.getLogin() + " " + "Покинул чат!");
+                server.stopObserver(this);
                 clientWriter.flush();
-                break;
+                return;
             } else {
                 System.out.println(user.getLogin() + ": " + clientMessage);
                 server.notifyObserver(user.getLogin() + ": " + clientMessage);
+                FileWriter fileWriter = new FileWriter("chat.txt",true);
+                fileWriter.write(user.getLogin() + ": " + clientMessage + "\n");
+                fileWriter.flush();
+//                for (int i = 0; i < chat.size(); i++) {
+//                    fileWriter.write(chat.get(i));
+//                    fileWriter.flush();
+//                }
             }
         }
-
     }
 
     @SneakyThrows

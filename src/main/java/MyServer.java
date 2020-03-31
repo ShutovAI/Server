@@ -35,11 +35,6 @@ public class MyServer implements Observable {
     @Override
     public void stopObserver(Observer o) {
         users.remove(o);
-//        for (int i = 0; i < users.size(); i++) {
-//            if(users.get(i).equals(o)){
-//                users.remove(o);
-//            }
-//        }
     }
 
     @Override
