@@ -1,5 +1,7 @@
 import lombok.SneakyThrows;
 
+import java.sql.*;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -15,8 +17,7 @@ public class UserEntity implements Runnable, Observer {
         this.server = server;
     }
 
-    ArrayList<String> chat = new ArrayList();
-
+    //    ArrayList<String> chat = new ArrayList();
     @SneakyThrows
     @Override
     public void run() {
@@ -28,8 +29,47 @@ public class UserEntity implements Runnable, Observer {
             if (clientMessage.contains(":")) {
                 String[] logPass = clientMessage.split(":");
                 user = new User(logPass[0], logPass[1]);
-                System.out.println("New user connected: " + logPass[0]);
-                server.addObserver(this);
+                try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
+                        "root", "123456")) {
+                    ResultSet resultSet = conn.prepareStatement("SELECT login from users").executeQuery();
+                    while (resultSet.next()) {
+                        if (logPass[0].equalsIgnoreCase(resultSet.getString("login"))) {
+                            clientWriter.println("Данный пользователь уже зарегистрирован!");
+                            clientWriter.flush();
+                            server.stopObserver(this);
+                            break;
+                        }else{
+                            PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                            clientWriter2.println("Регистация прошла успешно!");
+                            clientWriter2.flush();
+                            server.addObserver(this);
+                        }
+                        conn.close();
+                    }
+                    PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO users(login, password) values(?, ?)");
+                    preparedStatement.setString(1, user.getLogin());
+                    preparedStatement.setString(2, user.getPassword());
+                    preparedStatement.executeUpdate();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+//            if (clientMessage.contains(":")) {
+//                String[] logPass = clientMessage.split(":");
+//                user = new User(logPass[0], logPass[1]);
+//                System.out.println("New user connected: " + logPass[0]);
+//                server.addObserver(this);
+//                try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
+//                        "root", "123456")) {
+//                    System.out.println("connected with DB");
+//                 PreparedStatement preparedStatement =  conn.prepareStatement  ("INSERT INTO users(login,password) values(?, ?)");
+//                   preparedStatement.setString(1, user.getLogin());
+//                   preparedStatement.setString(2, user.getPassword());
+//                   preparedStatement.executeUpdate();
+//                } catch (SQLException e) {
+//                    e.printStackTrace();
+//                }
+
             } else if (clientMessage.startsWith("exit")) {
                 System.out.println("Пользователь: " + user.getLogin() + " disconnected");
                 clientWriter.println(user.getLogin() + " " + "Покинул чат!");
@@ -39,13 +79,9 @@ public class UserEntity implements Runnable, Observer {
             } else {
                 System.out.println(user.getLogin() + ": " + clientMessage);
                 server.notifyObserver(user.getLogin() + ": " + clientMessage);
-                FileWriter fileWriter = new FileWriter("chat.txt",true);
+                FileWriter fileWriter = new FileWriter("chat.txt", true);
                 fileWriter.write(user.getLogin() + ": " + clientMessage + "\n");
                 fileWriter.flush();
-//                for (int i = 0; i < chat.size(); i++) {
-//                    fileWriter.write(chat.get(i));
-//                    fileWriter.flush();
-//                }
             }
         }
     }
@@ -57,9 +93,32 @@ public class UserEntity implements Runnable, Observer {
         writer.println(message);
         writer.flush();
     }
+
 }
+//    private void connectionDBAddUser(User user) {
+//        try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
+//                "root", "123456")) {
+//            ResultSet resultSet = conn.prepareStatement("INSERT INTO user (id, login, password) VALUES (3, user.getLogin(), getPassword())").executeQuery();
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
 
 //    public boolean registration(){
 //        while (){
 //
+//        }
+
+
+//        Connection conn = null;
+//        try {
+//            conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
+//                    "root", "123456");
+//            ResultSet resultSet = conn.prepareStatement("SELECT login, password from USER").executeQuery();
+//            while (resultSet.next()) {
+//                System.out.println(resultSet.getString("login"));
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
 //        }

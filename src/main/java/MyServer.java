@@ -43,10 +43,6 @@ public class MyServer implements Observable {
             user.notifyObserver(message);
         }
     }
-
-    public void numUsers(){
-        for (Observer user : users){
-            System.out.println(user);
-        }
-    }
 }
+
+
