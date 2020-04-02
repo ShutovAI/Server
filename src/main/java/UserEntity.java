@@ -26,26 +26,32 @@ public class UserEntity implements Runnable, Observer {
         BufferedReader clientReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         while (true) {
             String clientMessage = clientReader.readLine();
-            if (clientMessage.contains(":")) {
+            if (clientMessage.contains(":") && clientMessage.contains("REGISTRATION")) {
                 String[] logPass = clientMessage.split(":");
-                user = new User(logPass[0], logPass[1]);
+                String s = logPass[1].replaceAll("REGISTRATION", "");
+                logPass[1] = s;
                 try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
                         "root", "123456")) {
                     ResultSet resultSet = conn.prepareStatement("SELECT login from users").executeQuery();
                     while (resultSet.next()) {
                         if (logPass[0].equalsIgnoreCase(resultSet.getString("login"))) {
+//                            server.stopObserver(this);
                             clientWriter.println("Данный пользователь уже зарегистрирован!");
                             clientWriter.flush();
-                            server.stopObserver(this);
-                            break;
-                        }else{
-                            PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                            clientWriter2.println("Регистация прошла успешно!");
-                            clientWriter2.flush();
-                            server.addObserver(this);
+
                         }
-                        conn.close();
                     }
+//                    if(logPass[0] == null){
+//                        conn.close();
+//                        return;
+//                    }
+                    PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                    clientWriter2.println("Регистация прошла успешно!");
+                    clientWriter2.flush();
+                    user = new User(logPass[0], logPass[1]);
+                    System.out.println("New user connected: " + logPass[0]);
+                    server.addObserver(this);
+
                     PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO users(login, password) values(?, ?)");
                     preparedStatement.setString(1, user.getLogin());
                     preparedStatement.setString(2, user.getPassword());
@@ -122,3 +128,4 @@ public class UserEntity implements Runnable, Observer {
 //        } catch (SQLException e) {
 //            e.printStackTrace();
 //        }
+
