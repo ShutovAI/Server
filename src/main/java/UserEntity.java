@@ -82,18 +82,38 @@ public class UserEntity implements Runnable, Observer {
                 String[] logPass = clientMessage.split(":");
                 String s = logPass[1].replaceAll("AUT", "");
                 logPass[1] = s;
+                String res = logPass[0] + logPass[1];
+                String res2 = null;
+                String log = null;
+                String pass= null;
                 while (true) {
                     try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
                             "root", "123456")) {
                         ResultSet resultSet = conn.prepareStatement("SELECT login, password from users").executeQuery();
+
                         while (resultSet.next()) {
-                            if (logPass[0].equalsIgnoreCase(resultSet.getString("login")) && logPass[1].equalsIgnoreCase(resultSet.getString("password"))) {
-                                PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                                clientWriter2.println("Вход успешно выполнен!");
-                                clientWriter2.flush();
-                                break;
-                            }
+                            log = log + resultSet.getString("login");
+                            pass = pass + resultSet.getString("password");
                         }
+                        if((log+pass).contains(res)){
+                            PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                            clientWriter2.println("Вход успешно выполнен!");
+                            clientWriter2.flush();
+                        }else{
+                            PrintWriter clientWriter3 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                            clientWriter3.println("Неверный логин или пароль!");
+                            clientWriter3.flush();
+                        }
+//                        while (resultSet.next()) {
+//                            if (res.equalsIgnoreCase((resultSet.getString("login")) + resultSet.getString("password"))) {
+//                                PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+//                                clientWriter2.println("Вход успешно выполнен!");
+//                                clientWriter2.flush();
+//                                break;
+//                            }
+//                        }
+
+
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
