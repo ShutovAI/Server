@@ -1,7 +1,6 @@
 import lombok.SneakyThrows;
 
 import java.sql.*;
-
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -30,98 +29,72 @@ public class UserEntity implements Runnable, Observer {
                 String[] logPass = clientMessage.split(":");
                 String s = logPass[1].replaceAll("REGISTRATION", "");
                 logPass[1] = s;
-                while (true) {
-                    try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
-                            "root", "123456")) {
-                        ResultSet resultSet = conn.prepareStatement("SELECT login from users").executeQuery();
-                        while (resultSet.next()) {
-                            if (logPass[0].equalsIgnoreCase(resultSet.getString("login"))) {
-//                                server.stopObserver(this);
-                                clientWriter.println("Данный пользователь уже зарегистрирован!");
-                                clientWriter.flush();
-                                logPass[0] = null;
-                                break;
-                            }
-                        }
-
-                        if (logPass[0] == null) {
-//                        conn.close();
+                String checkLogin = null;
+                try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
+                        "root", "123456")) {
+                    ResultSet resultSet = conn.prepareStatement("SELECT login from users").executeQuery();
+                    boolean flag = false;
+                    while (resultSet.next()) {
+                        checkLogin = checkLogin + resultSet.getString("login");
+                        if(checkLogin.contains(logPass[0])){
+                            flag = true;
                             break;
                         }
-                        PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                        clientWriter2.println("Регистация прошла успешно!");
-                        clientWriter2.flush();
+                    }
+                    if (flag == true) {
+                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                        writer.println("Данный пользователь уже зарегистрирован!");
+                        writer.flush();
+                    } else {
+                        PrintWriter writer2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                        writer2.println("Регистрация прошла успешно!");
+                        writer2.flush();
                         user = new User(logPass[0], logPass[1]);
-                        System.out.println("New user connected: " + logPass[0]);
+                        System.out.println("Подключен новый пользователь: " + logPass[0]);
                         server.addObserver(this);
-
                         PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO users(login, password) values(?, ?)");
                         preparedStatement.setString(1, user.getLogin());
                         preparedStatement.setString(2, user.getPassword());
                         preparedStatement.executeUpdate();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
                     }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-//            if (clientMessage.contains(":")) {
-//                String[] logPass = clientMessage.split(":");
-//                user = new User(logPass[0], logPass[1]);
-//                System.out.println("New user connected: " + logPass[0]);
-//                server.addObserver(this);
-//                try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
-//                        "root", "123456")) {
-//                    System.out.println("connected with DB");
-//                 PreparedStatement preparedStatement =  conn.prepareStatement  ("INSERT INTO users(login,password) values(?, ?)");
-//                   preparedStatement.setString(1, user.getLogin());
-//                   preparedStatement.setString(2, user.getPassword());
-//                   preparedStatement.executeUpdate();
-//                } catch (SQLException e) {
-//                    e.printStackTrace();
-//                }
             } else if (clientMessage.contains(":") && clientMessage.contains("AUT")) {
                 String[] logPass = clientMessage.split(":");
                 String s = logPass[1].replaceAll("AUT", "");
                 logPass[1] = s;
                 String res = logPass[0] + logPass[1];
                 String res2 = null;
-                String log = null;
-                String pass= null;
-                while (true) {
-                    try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
-                            "root", "123456")) {
-                        ResultSet resultSet = conn.prepareStatement("SELECT login, password from users").executeQuery();
 
-                        while (resultSet.next()) {
-                            log = log + resultSet.getString("login");
-                            pass = pass + resultSet.getString("password");
+                try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
+                        "root", "123456")) {
+                    ResultSet resultSet = conn.prepareStatement("SELECT login, password from users").executeQuery();
+                    boolean flag = false;
+                    while (resultSet.next()) {
+                        res2 = res2 + resultSet.getString("login") + resultSet.getString("password");
+                        if(res.equalsIgnoreCase(resultSet.getString("login") + resultSet.getString("password"))){
+                            flag = true;
+                            break;
                         }
-                        if((log+pass).contains(res)){
-                            PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                            clientWriter2.println("Вход успешно выполнен!");
-                            clientWriter2.flush();
-                        }else{
-                            PrintWriter clientWriter3 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                            clientWriter3.println("Неверный логин или пароль!");
-                            clientWriter3.flush();
-                        }
-//                        while (resultSet.next()) {
-//                            if (res.equalsIgnoreCase((resultSet.getString("login")) + resultSet.getString("password"))) {
-//                                PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-//                                clientWriter2.println("Вход успешно выполнен!");
-//                                clientWriter2.flush();
-//                                break;
-//                            }
-//                        }
-
-
-                    } catch (SQLException e) {
-                        e.printStackTrace();
                     }
-                    break;
+                    if(flag){
+                        PrintWriter clientWriter2 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                        clientWriter2.println("Вход успешно выполнен!");
+                        clientWriter2.flush();
+                        user = new User(logPass[0], logPass[1]);
+                        System.out.println("New user connected: " + logPass[0]);
+                        server.addObserver(this);
+                    } else {
+                        PrintWriter clientWriter3 = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                        clientWriter3.println("Неверный логин или пароль!");
+                        clientWriter3.flush();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-                user = new User(logPass[0], logPass[1]);
-                System.out.println("New user connected: " + logPass[0]);
-                server.addObserver(this);
+//                break;
+//                }
 
             } else if (clientMessage.startsWith("exit")) {
                 System.out.println("Пользователь: " + user.getLogin() + " disconnected");
@@ -148,31 +121,5 @@ public class UserEntity implements Runnable, Observer {
     }
 
 }
-//    private void connectionDBAddUser(User user) {
-//        try (Connection conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
-//                "root", "123456")) {
-//            ResultSet resultSet = conn.prepareStatement("INSERT INTO user (id, login, password) VALUES (3, user.getLogin(), getPassword())").executeQuery();
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
-
-//    public boolean registration(){
-//        while (){
-//
-//        }
-
-
-//        Connection conn = null;
-//        try {
-//            conn = DriverManager.getConnection("jdbc:MySQL://localhost:3306/my_schema?serverTimezone=UTC",
-//                    "root", "123456");
-//            ResultSet resultSet = conn.prepareStatement("SELECT login, password from USER").executeQuery();
-//            while (resultSet.next()) {
-//                System.out.println(resultSet.getString("login"));
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
 
